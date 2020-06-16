@@ -6,7 +6,7 @@ VALUES
 ('Goodbye'),
 ('Last folder');
 
-INSERT INTO notes (name, content, folderId)
+INSERT INTO notes (name, content, folders)
 VALUES 
 ('note 1', 'Esse duis deserunt commodo esse et incididunt ad in et.', 1),
 ('note 2', 'Irure ex laboris voluptate non veniam minim cupidatat veniam incididunt officia.', 2),

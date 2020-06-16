@@ -11,26 +11,18 @@ const serializeNote = note => ({
     id: note.id,
     name: xss(note.name),
     content: xss(note.content),
-    folderId: note.folderId
+    folders: note.folders
 });
 
 notesRouter
     .route('/')
-    .get((req, res, next) => {
-        const knexInstance = req.app.get('db');
-        NotesService.getAllNotes(knexInstance)
-            .then(notes => {
-                res.json(notes.map(serializeNote));
-            })
-            .catch(next);
-    })
     .post(jsonParser, (req, res, next) => {
-        const { name, content, folderId } = req.body;
-        const newNote = { name, content, folderId };
+        const { name, content, folders } = req.body;
+        const newNote = { name, content, folders };
         for (const [key, value] of Object.entries(newNote)) {
             if (value === null) {
                 return res.status(400).json({
-                    error: {message: `Missing ${key} in request body`}
+                    error: {message: `Missing '${key}' in request body`}
                 });
             }
         }
@@ -60,11 +52,13 @@ notesRouter
                         error: {message: 'Note does not exist'}
                     });
                 }
+                res.note = note;
+                next();
             })
             .catch(next);
     })
     .get((req, res, next) => {
-        res.json(serializeNote(res.note))
+        res.json(serializeNote(res.note));
     })
     .delete((req, res, next) => {
         NotesService.deleteNote(
@@ -77,13 +71,13 @@ notesRouter
             .catch(next);
     })
     .patch(jsonParser, (req, res, next) => {
-        const {name, content, folderId} = req.body;
-        const noteToUpdate = { name, content, folderId };
+        const {name, content, folders} = req.body;
+        const noteToUpdate = { name, content, folders };
         const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
         if(numberOfValues === 0)
             return res.status(400).json({
                 error: {
-                    message: 'Request body must contain name, content, and folderId'
+                    message: 'Request body must contain name, content, and folders'
                 }
             });
         NotesService.updateNote(

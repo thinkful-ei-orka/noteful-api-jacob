@@ -4,10 +4,12 @@ const app = require('../src/app');
 const supertest = require('supertest');
 const foldersRouter = require('../src/folders/folders-router');
 const { makeFoldersArray, makeMaliciousFolder } = require('./folders.fixtures');
+const { makeNotesArray } = require('./notes.fixtures');
 const { init } = require('../src/app');
+const { DB_URL } = require('../src/config');
 
 
-describe.only('Folders endpoints',() => {
+describe('Folders endpoints',() => {
     let db;
     before('make knex instance', () => {
         db = knex({
@@ -17,9 +19,8 @@ describe.only('Folders endpoints',() => {
         app.set('db', db);
     });
     after('disconnect from db',() => db.destroy());
-    before('Clean table', () => db('folders').truncate());
-    afterEach('Clean up table', () => db('folders').truncate());
-
+    before('Clean table', () => db.raw('TRUNCATE notes, folders RESTART IDENTITY CASCADE'));
+    afterEach('Clean up table', () => db.raw('TRUNCATE notes, folders RESTART IDENTITY CASCADE'));
 
     describe('GET /api/folders',() => {
         context('Given no folders', () => {
@@ -32,11 +33,12 @@ describe.only('Folders endpoints',() => {
 
         context('Given an XSS attack folder', () => {
             const { maliciousFolder, expectedFolder } = makeMaliciousFolder();
+            const testNotes = makeNotesArray();
 
             beforeEach('insert folders', () => {
                 return db 
                     .into('folders')
-                    .insert([ maliciousFolder ]);
+                    .insert([ maliciousFolder ])
             });
 
             it('removes XSS attack content', () => {
@@ -51,10 +53,16 @@ describe.only('Folders endpoints',() => {
 
         context('Given there are folders in the database', () => {
             const testFolders = makeFoldersArray();
+            const testNotes = makeNotesArray();
             beforeEach('insert folders', () => {
                 return db
                     .into('folders')
-                    .insert(testFolders);
+                    .insert(testFolders)
+                    .then(() => {
+                        return db
+                            .into('notes')
+                            .insert(testNotes)
+                    });
             });
             it('Responds with 200 and all of the folders', () => {
                 return supertest(app)
@@ -182,7 +190,7 @@ describe.only('Folders endpoints',() => {
             });
         });
     });
-    describe.only('PATCH /api/folders/:id', () => {
+    describe('PATCH /api/folders/:id', () => {
         context('Given no folders', () => {
             it('responds with 404', () => {
                 const folderId = 2134;
