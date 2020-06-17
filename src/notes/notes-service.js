@@ -32,6 +32,11 @@ const NotesService = {
             .where({ id })
             .update(newNoteFields);
     },
+    getByfolderid(knex, id) {
+        return knex('notes')
+            .select('*')
+            .where({folderid: id});
+    }
 };
   
 module.exports = NotesService;

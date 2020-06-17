@@ -9,7 +9,7 @@ const knexInstance = knex({
 FoldersService.getAllFolders(knexInstance)
     .then(folders => console.log(folders))
     .then(() => FoldersService.insertFolder(knexInstance, {
-        name: 'inserted a new folder!'
+        folder_name: 'inserted a new folder!'
     })
     )
     .then(newFolder => {
@@ -17,7 +17,7 @@ FoldersService.getAllFolders(knexInstance)
         return FoldersService.updateFolder(
             knexInstance, 
             newFolder.id, 
-            {name: 'updated again!'}
+            {folder_name: 'updated again!'}
         );
     })
     .then(folder => {

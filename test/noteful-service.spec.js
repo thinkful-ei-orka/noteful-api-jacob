@@ -1,25 +1,21 @@
 const { expect } = require("chai");
 const knex = require('knex');
 const FoldersService = require('../src/folders/folders-service');
+const { makeFoldersArray } = require("./folders.fixtures");
 
 
 
 describe('Folders-service object', () => {
     let db;
-    let testFolders = [
-        {id: 1, name: 'First test'},
-        {id: 2, name: 'Second test'},
-        {id: 3, name: 'Third test'}
-    ];
+    let testFolders = makeFoldersArray();
     before(() => {
         db = knex({
             client: 'pg',
             connection: process.env.TEST_DB_URL,
         });
     });
-    before(() => db('folders').truncate());
-    afterEach(() => db('folders').truncate());
-
+    before('Clean table', () => db.raw('TRUNCATE notes, folders RESTART IDENTITY CASCADE'));
+    afterEach('Clean up table', () => db.raw('TRUNCATE notes, folders RESTART IDENTITY CASCADE'));
     after(() => db.destroy());
 
     describe('getAllFolders()',() => {
@@ -49,12 +45,12 @@ describe('Folders-service object', () => {
         context('given "folders" has no data', () => {
 
             it('inserts a new folder and resolves the new folder with an id', () => {
-                const newFolder = {name: 'new folder name'};
+                const newFolder = {folder_name: 'new folder name'};
                 return FoldersService.insertFolder(db, newFolder)
                     .then(actual => {
                         expect(actual).to.eql({
                             id: 1,
-                            name: 'new folder name'
+                            folder_name: 'new folder name'
                         });
                     });
             });
@@ -74,7 +70,7 @@ describe('Folders-service object', () => {
                     .then(actual => {
                         expect(actual).to.eql({
                             id: thirdId,
-                            name: 'Third test'
+                            folder_name: 'Third test'
                         });
                     });
             });
@@ -88,11 +84,11 @@ describe('Folders-service object', () => {
                     .insert(testFolders);
             });
             it('deleteFolders() removes a folder by id from "folders"', () => {
-                const folderId = 3;
-                return FoldersService.deleteFolder(db, folderId)
+                const folderid = 3;
+                return FoldersService.deleteFolder(db, folderid)
                     .then(() => FoldersService.getAllFolders(db))
                     .then(allFolders => {
-                        const expected = testFolders.filter(folder => folder.id !== folderId);
+                        const expected = testFolders.filter(folder => folder.id !== folderid);
                         expect(allFolders).to.eql(expected);
                     });
             });
@@ -108,7 +104,7 @@ describe('Folders-service object', () => {
             it('Updates a folder name in "folders" by id', () => {
                 const idOfUpdateFolder = 3;
                 const newFolderData = {
-                    name: 'new name'
+                    folder_name: 'new name'
                 };
                 return FoldersService.updateFolder(db, idOfUpdateFolder, newFolderData)
                     .then(() => {

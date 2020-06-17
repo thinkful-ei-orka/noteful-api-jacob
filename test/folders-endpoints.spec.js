@@ -46,7 +46,7 @@ describe('Folders endpoints',() => {
                     .get(`/api/folders`)
                     .expect(200)
                     .expect(res => {
-                        expect(res.body[0].name).to.eql(expectedFolder.name);
+                        expect(res.body[0].folder_name).to.eql(expectedFolder.folder_name);
                     });
             });
         });
@@ -74,9 +74,9 @@ describe('Folders endpoints',() => {
     describe('GET /api/folders/:id', () => {
         context('Given no folders', () => {
             it('responds with 404', () => {
-                const folderId = 23423;
+                const folderid = 23423;
                 return supertest(app)
-                    .get(`/api/folders/${folderId}`)
+                    .get(`/api/folders/${folderid}`)
                     .expect(404, {error: {message: 'Folder does not exist'}});
             });
         });
@@ -86,14 +86,14 @@ describe('Folders endpoints',() => {
                 beforeEach('insert malicious folder', () => {
                     return db
                         .into('folders')
-                        .insert([maliciousFolder]);
+                        .insert(maliciousFolder);
                 });
                 it('removes XSS attack content', () => {
                     return supertest(app)
                         .get(`/api/folders/${maliciousFolder.id}`)
                         .expect(200)
                         .expect(res => {
-                            expect(res.body.name).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
+                            expect(res.body.folder_name).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
                         });
                 });
             });
@@ -104,10 +104,10 @@ describe('Folders endpoints',() => {
                     .insert(testFolders);
             });
             it('GET /api/folders/:id responds with 200 and the specified folder', () => {
-                const folderId = 2;
-                const expectedFolder = testFolders[folderId - 1];
+                const folderid = 2;
+                const expectedFolder = testFolders[folderid - 1];
                 return supertest(app)
-                    .get(`/api/folders/${folderId}`)
+                    .get(`/api/folders/${folderid}`)
                     .expect(200, expectedFolder);
             });
         });
@@ -116,7 +116,7 @@ describe('Folders endpoints',() => {
         context('Given an XSS attack article', () => {
             const maliciousFolder = {
                 id: 911,
-                name: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
+                folder_name: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
             };
             beforeEach('insert malicious folder', () => {
                 return db
@@ -129,19 +129,19 @@ describe('Folders endpoints',() => {
                     .send(maliciousFolder)
                     .expect(201)
                     .expect(res => {
-                        expect(res.body.name).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
+                        expect(res.body.folder_name).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
                     });
             });
         });
         it('creates a folder responding with 201 and the new folder', () => {
             const newFolder = {
-                name: "It's a new folder!",
+                folder_name: "It's a new folder!",
             };
             return supertest(app)
                 .post('/api/folders')
                 .send(newFolder)
                 .expect(res => {
-                    expect(res.body.name).to.eql(newFolder.name);
+                    expect(res.body.folder_name).to.eql(newFolder.folder_name);
                     expect(res.body).to.have.property('id')
                     expect(res.headers.location).to.eql(`/api/folders/${res.body.id}`);
                 })
@@ -156,16 +156,16 @@ describe('Folders endpoints',() => {
                 .post('/api/folders')
                 .send({})
                 .expect(400, {
-                    error: {message: 'Missing name in request body'}
+                    error: {message: 'Missing folder_name in request body'}
                 });
         });
     });
     describe('DELETE /api/folders/:id', () => {
         context('Given no folders', () => {
             it('responds with 404', () => {
-                const folderId = 2342;
+                const folderid = 2342;
                 return supertest(app)
-                    .delete(`/api/folders/${folderId}`)
+                    .delete(`/api/folders/${folderid}`)
                     .expect(404, {error: {message: 'Folder does not exist'}});
             });
         });
@@ -193,9 +193,9 @@ describe('Folders endpoints',() => {
     describe('PATCH /api/folders/:id', () => {
         context('Given no folders', () => {
             it('responds with 404', () => {
-                const folderId = 2134;
+                const folderid = 2134;
                 return supertest(app)
-                    .patch(`/api/folders/${folderId}`)
+                    .patch(`/api/folders/${folderid}`)
                     .expect(404, {error: {message: 'Folder does not exist'}});
             });
         });
@@ -209,7 +209,7 @@ describe('Folders endpoints',() => {
             it('responds with 204 and updates folder', () => {
                 const idToUpdate = 2;
                 const updateFolder = {
-                    name: 'Updated name',
+                    folder_name: 'Updated name',
                 };
                 const expectedFolder = {
                     ...testFolders[idToUpdate -1],
@@ -231,7 +231,7 @@ describe('Folders endpoints',() => {
                     .patch(`/api/folders/${idToUpdate}`)
                     .send({ irrelevantField: 'foo'})
                     .expect(400, {
-                        error: {message: 'Request body must contain name'}
+                        error: {message: 'Request body must contain folder_name'}
                     })
             })
         });

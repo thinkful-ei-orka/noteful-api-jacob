@@ -9,16 +9,24 @@ const jsonParser = express.json();
 
 const serializeNote = note => ({
     id: note.id,
-    name: xss(note.name),
+    note_name: xss(note.note_name),
     content: xss(note.content),
-    folders: note.folders
+    folderid: note.folderid
 });
 
 notesRouter
     .route('/')
+    .get((req, res, next) => {
+        const knexInstance = req.app.get('db');
+        NotesService.getAllNotes(knexInstance)
+            .then(notes => {
+                res.json(notes.map(serializeNote));
+            })
+            .catch(next);
+    })
     .post(jsonParser, (req, res, next) => {
-        const { name, content, folders } = req.body;
-        const newNote = { name, content, folders };
+        const { note_name, content, folderid } = req.body;
+        const newNote = { note_name, content, folderid };
         for (const [key, value] of Object.entries(newNote)) {
             if (value === null) {
                 return res.status(400).json({
@@ -71,13 +79,13 @@ notesRouter
             .catch(next);
     })
     .patch(jsonParser, (req, res, next) => {
-        const {name, content, folders} = req.body;
-        const noteToUpdate = { name, content, folders };
+        const {note_name, content, folderid} = req.body;
+        const noteToUpdate = { note_name, content, folderid };
         const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
         if(numberOfValues === 0)
             return res.status(400).json({
                 error: {
-                    message: 'Request body must contain name, content, and folders'
+                    message: 'Request body must contain note_name, content, and folderid'
                 }
             });
         NotesService.updateNote(

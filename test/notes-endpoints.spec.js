@@ -8,7 +8,7 @@ const { makeNotesArray, makeMaliciousNote } = require('./notes.fixtures');
 const { makeFoldersArray } = require('./folders.fixtures');
 
 
-describe.only('Notes endpoints', () => {
+describe('Notes endpoints', () => {
     let db;
     before('make knex instance', () => {
 
@@ -63,18 +63,18 @@ describe.only('Notes endpoints', () => {
         });
         it('creates a note, responding with 201 and the new note', () => {
             const newNote = {
-                name: 'New note!',
+                note_name: 'New note!',
                 content: 'Mollit reprehenderit veniam magna velit.',
-                folders: 1
+                folderid: 1
             };
             return supertest(app)
                 .post('/api/notes')
                 .send(newNote)
                 .expect(201)
                 .expect(res => {
-                    expect(res.body.name).to.eql(newNote.name);
+                    expect(res.body.note_name).to.eql(newNote.note_name);
                     expect(res.body.content).to.eql(newNote.content);
-                    expect(res.body.folders).to.eql(newNote.folders);
+                    expect(res.body.folderid).to.eql(newNote.folderid);
                 })
                 .then(res => {
                     supertest(app)
@@ -147,9 +147,9 @@ describe.only('Notes endpoints', () => {
             it('responds with 204 and updates the note', () => {
                 const idToUpdate = 2;
                 const updateNote = {
-                    name: 'OMG NEW NAME',
+                    note_name: 'OMG NEW NAME',
                     content: 'Wait.. where is the lorem?!',
-                    folders: 3
+                    folderid: 3
                 };
                 const expectedNote = {
                     ...testNotes[idToUpdate - 1],
@@ -173,14 +173,14 @@ describe.only('Notes endpoints', () => {
                   .send({ irrelevantField: 'foo' })
                   .expect(400, {
                     error: {
-                      message: 'Request body must contain name, content, and folders'
+                      message: 'Request body must contain note_name, content, and folderid'
                     }
                   })
             })
             it(`responds with 204 when updating only a subset of fields`, () => {
                 const idToUpdate = 2
                 const updateNote = {
-                  name: 'updated note name',
+                  note_name: 'updated note name',
                 }
                 const expectedArticle = {
                   ...testNotes[idToUpdate - 1],

@@ -2,12 +2,14 @@ const path = require('path');
 const express = require('express');
 const xss = require('xss');
 const FoldersService = require('./folders-service');
+const NotesService = require('../notes/notes-service');
+const { serialize } = require('v8');
 const foldersRouter = express.Router();
 const jsonParser = express.json();
 
 const serializeFolder = folder => ({
     id: folder.id,
-    name: xss(folder.name)
+    folder_name: xss(folder.folder_name)
 });
 
 foldersRouter
@@ -16,17 +18,17 @@ foldersRouter
         const knexInstance = req.app.get('db');
         FoldersService.getAllFolders(knexInstance)
             .then(folders => {
-                res.json(folders.map(serializeFolder));
+                res.send(folders.map(serializeFolder));
             })
             .catch(next);
     })
     .post(jsonParser, (req, res, next) => {
-        const { name } = req.body;
-        const newFolder = { name };
-        if(!name) {
+        const { folder_name } = req.body;
+        const newFolder = { folder_name };
+        if(!folder_name) {
             return res
                 .status(400)
-                .json({error: {message: 'Missing name in request body'}});
+                .json({error: {message: 'Missing folder_name in request body'}});
         }
         FoldersService.insertFolder(
             req.app.get('db'),
@@ -36,9 +38,9 @@ foldersRouter
                 res
                     .status(201)
                     .location(path.posix.join(`/api/folders/${folder.id}`))
-                    .json({
+                    .send({
                         id: folder.id,
-                        name: xss(folder.name)});
+                        folder_name: xss(folder.folder_name)});
             })
             .catch(next);
     });
@@ -58,10 +60,7 @@ foldersRouter
             });
     })
     .get((req,res,next) => {
-        res.json({
-            id: res.folder.id,
-            name: xss(res.folder.name),
-        });
+        res.json(serializeFolder(res.folder));
     })
     .delete((req, res, next) => {
         FoldersService.deleteFolder(
@@ -74,12 +73,12 @@ foldersRouter
             .catch(next);
     })
     .patch(jsonParser, (req, res, next) => {
-        const { name } = req.body;
-        const folderToUpdate = {name};
+        const { folder_name } = req.body;
+        const folderToUpdate = {folder_name};
         const numberOfValues = Object.values(folderToUpdate).filter(Boolean).length;
         if(numberOfValues === 0) {
             return res.status(400).json({
-                error: {message: 'Request body must contain name'}
+                error: {message: 'Request body must contain folder_name'}
             });
         }
         FoldersService.updateFolder(
